@@ -197,7 +197,16 @@ func LevelString(level Level) string {
 	}
 }
 
-// NewLogger creates a new instance of Logger
+// NewLogger creates a new Logger instance using arguments for an io.Writer, service name and type, and
+// a log level.
+//
+// The serviceName and serviceType arguments correspond to service.name and service.type in the ECS
+// specification (see: https://doc.wikimedia.org/ecs/#ecs-service); Broadly speaking, service type refers
+// to the software system implementing logging, and service name to the instance of that system sending
+// log data.
+//
+// The logLevel argument must be set to one of DEBUG, INFO, WARNING, ERROR, or FATAL.  Only messages
+// logged at this level - or higher - are formatted and output.
 func NewLogger(writer io.Writer, serviceName, serviceType string, logLevel Level) (*Logger, error) {
 
 	if !validLevel(logLevel) {
