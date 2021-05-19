@@ -45,7 +45,7 @@ func (m *mockWriter) ReadMessage() (msg *LogMessage, err error) {
 func TestLogger(t *testing.T) {
 	setUp := func(level Level) (*mockWriter, *Logger) {
 		writer := &mockWriter{}
-		logger, _ := NewLogger(writer, "logtest", "logger", LevelString(level))
+		logger, _ := NewLogger(writer, "logtest", "logger", level)
 		return writer, logger
 	}
 
@@ -101,7 +101,7 @@ func TestLogger(t *testing.T) {
 
 	t.Run("Scoped", func(t *testing.T) {
 		writer, logger := setUp(INFO)
-		logger.RequestID("0000000a-000a-000a-000a-00000000000a").Log(WARNING, "Consider yourself %s", "warned")
+		logger.TraceID("0000000a-000a-000a-000a-00000000000a").Log(WARNING, "Consider yourself %s", "warned")
 
 		res, err := writer.ReadMessage()
 		if err != nil {

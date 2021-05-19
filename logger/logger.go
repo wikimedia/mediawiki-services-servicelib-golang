@@ -68,8 +68,8 @@ type LogMessage struct {
 
 // ScopedLogger formats and delivers a Logger and optional LogMessage attributes.
 type ScopedLogger struct {
-	logger    *Logger
-	requestID string
+	logger  *Logger
+	traceID string
 }
 
 // Log creates a LogMessage at the specified level.
@@ -80,14 +80,14 @@ func (s *ScopedLogger) Log(level Level, format string, v ...interface{}) {
 			Message:   fmt.Sprintf(format, v...),
 			Service:   ecsService{Name: s.logger.serviceName, Type: s.logger.serviceType},
 			Log:       ecsLog{Level: LevelString(level)},
-			Trace:     ecsTrace{ID: s.requestID},
+			Trace:     ecsTrace{ID: s.traceID},
 		}
 	})
 }
 
-// RequestID records the request id and returns a ScopedLogger.
-func (l *Logger) RequestID(id string) *ScopedLogger {
-	return &ScopedLogger{logger: l, requestID: id}
+// TraceID records the request id and returns a ScopedLogger.
+func (l *Logger) TraceID(id string) *ScopedLogger {
+	return &ScopedLogger{logger: l, traceID: id}
 }
 
 // This is an internal implementation; The application should log messages
@@ -198,23 +198,11 @@ func LevelString(level Level) string {
 }
 
 // NewLogger creates a new instance of Logger
-func NewLogger(writer io.Writer, serviceName, serviceType, logLevel string) (*Logger, error) {
-	var level Level
+func NewLogger(writer io.Writer, serviceName, serviceType string, logLevel Level) (*Logger, error) {
 
-	switch strings.ToUpper(logLevel) {
-	case LevelString(DEBUG):
-		level = DEBUG
-	case LevelString(INFO):
-		level = INFO
-	case LevelString(WARNING):
-		level = WARNING
-	case LevelString(ERROR):
-		level = ERROR
-	case LevelString(FATAL):
-		level = FATAL
-	default:
-		return nil, fmt.Errorf("Unsupported log level: %s", logLevel)
+	if !validLevel(logLevel) {
+		return nil, fmt.Errorf("Unsupported log level: %d", logLevel)
 	}
 
-	return &Logger{writer, serviceName, serviceType, level}, nil
+	return &Logger{writer, serviceName, serviceType, logLevel}, nil
 }
