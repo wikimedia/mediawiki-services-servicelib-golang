@@ -44,6 +44,12 @@ type Logger struct {
 	logLevel    Level
 }
 
+type ecsClient struct {
+	Bytes int    `json:"bytes,omitempty"`
+	IP    string `json:"ip,omitempty"`
+	Port  int    `json:"port,omitempty"`
+}
+
 type ecsLog struct {
 	Level string `json:"level"`
 }
@@ -61,15 +67,17 @@ type ecsTrace struct {
 type LogMessage struct {
 	Timestamp string     `json:"@timestamp"`
 	Message   string     `json:"message"`
+	Client    *ecsClient `json:"client,omitempty"`
 	Log       ecsLog     `json:"log"`
 	Service   ecsService `json:"service"`
-	Trace     ecsTrace   `json:"trace,omitempty"`
+	Trace     *ecsTrace  `json:"trace,omitempty"`
 }
 
 // RequestScopedLogger formats and delivers a Logger and optional LogMessage attributes.
 type RequestScopedLogger struct {
-	logger  *Logger
-	traceID string
+	logger *Logger
+	client *ecsClient
+	trace  *ecsTrace
 }
 
 // Log creates a LogMessage at the specified level.
@@ -78,19 +86,51 @@ func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) 
 		return LogMessage{
 			Timestamp: time.Now().Format(time.RFC3339),
 			Message:   fmt.Sprintf(format, v...),
-			Service:   ecsService{Name: s.logger.serviceName, Type: s.logger.serviceType},
+			Client:    s.client,
 			Log:       ecsLog{Level: LevelString(level)},
-			Trace:     ecsTrace{ID: s.traceID},
+			Service:   ecsService{Name: s.logger.serviceName, Type: s.logger.serviceType},
+			Trace:     s.trace,
 		}
 	})
 }
 
-// Trace sets a trace ID, and returns the RequestScopedLogger
-func (s *RequestScopedLogger) Trace(id string) *RequestScopedLogger {
-	s.traceID = id
+// ClientBytes sets a client bytes attribute on subsequent log messages
+func (s *RequestScopedLogger) ClientBytes(size int) *RequestScopedLogger {
+	if s.client == nil {
+		s.client = &ecsClient{}
+	}
+	s.client.Bytes = size
 	return s
 }
 
+// ClientIP sets a client IP attribute on subsequent log messages.
+func (s *RequestScopedLogger) ClientIP(ip string) *RequestScopedLogger {
+	if s.client == nil {
+		s.client = &ecsClient{}
+	}
+	s.client.IP = ip
+	return s
+}
+
+// ClientPort sets a client port attribute on subsequent log messages.
+func (s *RequestScopedLogger) ClientPort(port int) *RequestScopedLogger {
+	if s.client == nil {
+		s.client = &ecsClient{}
+	}
+	s.client.Port = port
+	return s
+}
+
+// Trace sets a trace ID attribute on subsequent log messages.
+func (s *RequestScopedLogger) Trace(id string) *RequestScopedLogger {
+	if s.trace == nil {
+		s.trace = &ecsTrace{}
+	}
+	s.trace.ID = id
+	return s
+}
+
+// Request creates and returns a request-scoped Logger
 func (l *Logger) Request() *RequestScopedLogger {
 	return &RequestScopedLogger{logger: l}
 }

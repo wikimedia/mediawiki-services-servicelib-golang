@@ -101,7 +101,13 @@ func TestLogger(t *testing.T) {
 
 	t.Run("Request scoped", func(t *testing.T) {
 		writer, logger := setUp(INFO)
-		logger.Request().Trace("0000000a-000a-000a-000a-00000000000a").Log(WARNING, "Consider yourself %s", "warned")
+		logger.
+			Request().
+			Trace("0000000a-000a-000a-000a-00000000000a").
+			ClientIP("127.0.0.1").
+			ClientPort(9000).
+			ClientBytes(1500).
+			Log(WARNING, "Consider yourself %s", "warned")
 
 		res, err := writer.ReadMessage()
 		if err != nil {
@@ -110,8 +116,12 @@ func TestLogger(t *testing.T) {
 
 		assert.Equal(t, "Consider yourself warned", res.Message, "Wrong message string attribute")
 		assert.Equal(t, LevelString(WARNING), res.Log.Level, "Wrong log level attribute")
-		assert.Equal(t, "logtest", res.Service.Name, "Wrong appname attribute")
-		assert.Equal(t, "0000000a-000a-000a-000a-00000000000a", res.Trace.ID, "Wrong request_id attribute")
+		assert.Equal(t, "logtest", res.Service.Name, "Wrong service.name attribute")
+		assert.Equal(t, "logger", res.Service.Type, "Incorrect service.type attribute")
+		assert.Equal(t, "0000000a-000a-000a-000a-00000000000a", res.Trace.ID, "Wrong trace.id attribute")
+		assert.Equal(t, "127.0.0.1", res.Client.IP, "Incorrect client.ip attribute")
+		assert.Equal(t, 9000, res.Client.Port, "Incorrect client.port attribute")
+		assert.Equal(t, 1500, res.Client.Bytes, "Incorrect client.bytes attribute")
 	})
 
 	t.Run("Using log module", func(t *testing.T) {
