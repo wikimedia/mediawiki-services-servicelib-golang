@@ -47,25 +47,30 @@ type LogMessage struct {
 	Trace     *ecsTrace   `json:"trace,omitempty"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-client
 type ecsClient struct {
 	Bytes int    `json:"bytes,omitempty"`
 	IP    string `json:"ip,omitempty"`
 	Port  string `json:"port,omitempty"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-log
 type ecsLog struct {
 	Level string `json:"level"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-network
 type ecsNetwork struct {
 	ForwardedIP string `json:"forwarded_ip,omitempty"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-service
 type ecsService struct {
 	Name string `json:"name,omitempty"`
 	Type string `json:"type,omitempty"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-tracing
 type ecsTrace struct {
 	ID string `json:"id,omitempty"`
 }
