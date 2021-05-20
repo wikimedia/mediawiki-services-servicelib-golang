@@ -23,7 +23,7 @@ func main() {
     log.Info("The current time is %s", time.Now().Format(time.RFC3339))
 
     hostname, _ := os.Hostname()
-    log.TraceID("0a762a9c-b8d6-11eb-87bc-4f82287279b0").Log(logger.INFO, "request received by %s", hostname)
+    log.Request().Trace("0a762a9c-b8d6-11eb-87bc-4f82287279b0").Log(logger.INFO, "request received by %s", hostname)
 
 }
 ```

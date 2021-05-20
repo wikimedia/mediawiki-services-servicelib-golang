@@ -99,9 +99,9 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, 0, len(writer.data), "Unexpected log output")
 	})
 
-	t.Run("Scoped", func(t *testing.T) {
+	t.Run("Request scoped", func(t *testing.T) {
 		writer, logger := setUp(INFO)
-		logger.TraceID("0000000a-000a-000a-000a-00000000000a").Log(WARNING, "Consider yourself %s", "warned")
+		logger.Request().Trace("0000000a-000a-000a-000a-00000000000a").Log(WARNING, "Consider yourself %s", "warned")
 
 		res, err := writer.ReadMessage()
 		if err != nil {

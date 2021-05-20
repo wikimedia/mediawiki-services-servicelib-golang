@@ -66,14 +66,14 @@ type LogMessage struct {
 	Trace     ecsTrace   `json:"trace,omitempty"`
 }
 
-// ScopedLogger formats and delivers a Logger and optional LogMessage attributes.
-type ScopedLogger struct {
+// RequestScopedLogger formats and delivers a Logger and optional LogMessage attributes.
+type RequestScopedLogger struct {
 	logger  *Logger
 	traceID string
 }
 
 // Log creates a LogMessage at the specified level.
-func (s *ScopedLogger) Log(level Level, format string, v ...interface{}) {
+func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) {
 	s.logger.log(level, func() LogMessage {
 		return LogMessage{
 			Timestamp: time.Now().Format(time.RFC3339),
@@ -85,9 +85,14 @@ func (s *ScopedLogger) Log(level Level, format string, v ...interface{}) {
 	})
 }
 
-// TraceID records the request id and returns a ScopedLogger.
-func (l *Logger) TraceID(id string) *ScopedLogger {
-	return &ScopedLogger{logger: l, traceID: id}
+// Trace sets a trace ID, and returns the RequestScopedLogger
+func (s *RequestScopedLogger) Trace(id string) *RequestScopedLogger {
+	s.traceID = id
+	return s
+}
+
+func (l *Logger) Request() *RequestScopedLogger {
+	return &RequestScopedLogger{logger: l}
 }
 
 // This is an internal implementation; The application should log messages
