@@ -20,10 +20,15 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type mockWriter struct {
@@ -42,13 +47,13 @@ func (m *mockWriter) ReadMessage() (msg *LogMessage, err error) {
 	return msg, nil
 }
 
-func TestLogger(t *testing.T) {
-	setUp := func(level Level) (*mockWriter, *Logger) {
-		writer := &mockWriter{}
-		logger, _ := NewLogger(writer, "logtest", "logger", level)
-		return writer, logger
-	}
+func setUp(level Level) (*mockWriter, *Logger) {
+	writer := &mockWriter{}
+	logger, _ := NewLogger(writer, "logtest", "logger", level)
+	return writer, logger
+}
 
+func TestLogger(t *testing.T) {
 	t.Run("Simple logging", func(t *testing.T) {
 		testCases := []struct {
 			format string
@@ -105,7 +110,7 @@ func TestLogger(t *testing.T) {
 			Request().
 			Trace("0000000a-000a-000a-000a-00000000000a").
 			ClientIP("127.0.0.1").
-			ClientPort(9000).
+			ClientPort("9000").
 			ClientBytes(1500).
 			Log(WARNING, "Consider yourself %s", "warned")
 
@@ -120,7 +125,7 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, "logger", res.Service.Type, "Incorrect service.type attribute")
 		assert.Equal(t, "0000000a-000a-000a-000a-00000000000a", res.Trace.ID, "Wrong trace.id attribute")
 		assert.Equal(t, "127.0.0.1", res.Client.IP, "Incorrect client.ip attribute")
-		assert.Equal(t, 9000, res.Client.Port, "Incorrect client.port attribute")
+		assert.Equal(t, "9000", res.Client.Port, "Incorrect client.port attribute")
 		assert.Equal(t, 1500, res.Client.Bytes, "Incorrect client.bytes attribute")
 	})
 
@@ -138,4 +143,33 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, "Sent via log module", res.Message, "Wrong message string attribute")
 		assert.Equal(t, LevelString(WARNING), res.Log.Level, "Wrong log level attribute")
 	})
+}
+
+func TestHandler(t *testing.T) {
+	writer, logger := setUp(DEBUG)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log := r.Context().Value(ScopedLogger).(*RequestScopedLogger)
+		log.Log(INFO, "In yer request, logging yer logs")
+		io.WriteString(w, "<html><body>Hello World!</body></html>")
+	})
+
+	ts := httptest.NewServer(LoggerInjectingMiddleware(logger)(handler))
+	defer ts.Close()
+
+	res, err := http.Get(ts.URL)
+	require.Nil(t, err)
+
+	_, err = ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	require.Nil(t, err)
+
+	msg, err := writer.ReadMessage()
+	require.Nil(t, err)
+	assert.Equal(t, "In yer request, logging yer logs", msg.Message, "Message text")
+	assert.Equal(t, LevelString(INFO), msg.Log.Level, "Logging level")
+	assert.NotNil(t, msg.Client)
+	assert.NotEmpty(t, msg.Client.IP)
+	assert.NotEmpty(t, msg.Client.Port)
+
 }

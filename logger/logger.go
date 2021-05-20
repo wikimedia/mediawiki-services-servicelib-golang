@@ -47,11 +47,15 @@ type Logger struct {
 type ecsClient struct {
 	Bytes int    `json:"bytes,omitempty"`
 	IP    string `json:"ip,omitempty"`
-	Port  int    `json:"port,omitempty"`
+	Port  string `json:"port,omitempty"`
 }
 
 type ecsLog struct {
 	Level string `json:"level"`
+}
+
+type ecsNetwork struct {
+	ForwardedIP string `json:"forwarded_ip,omitempty"`
 }
 
 type ecsService struct {
@@ -65,19 +69,21 @@ type ecsTrace struct {
 
 // LogMessage represents JSON serializable log messages.
 type LogMessage struct {
-	Timestamp string     `json:"@timestamp"`
-	Message   string     `json:"message"`
-	Client    *ecsClient `json:"client,omitempty"`
-	Log       ecsLog     `json:"log"`
-	Service   ecsService `json:"service"`
-	Trace     *ecsTrace  `json:"trace,omitempty"`
+	Timestamp string      `json:"@timestamp"`
+	Message   string      `json:"message"`
+	Client    *ecsClient  `json:"client,omitempty"`
+	Log       ecsLog      `json:"log"`
+	Network   *ecsNetwork `json:"network,omitempty"`
+	Service   ecsService  `json:"service"`
+	Trace     *ecsTrace   `json:"trace,omitempty"`
 }
 
 // RequestScopedLogger formats and delivers a Logger and optional LogMessage attributes.
 type RequestScopedLogger struct {
-	logger *Logger
-	client *ecsClient
-	trace  *ecsTrace
+	logger  *Logger
+	client  *ecsClient
+	network *ecsNetwork
+	trace   *ecsTrace
 }
 
 // Log creates a LogMessage at the specified level.
@@ -113,11 +119,20 @@ func (s *RequestScopedLogger) ClientIP(ip string) *RequestScopedLogger {
 }
 
 // ClientPort sets a client port attribute on subsequent log messages.
-func (s *RequestScopedLogger) ClientPort(port int) *RequestScopedLogger {
+func (s *RequestScopedLogger) ClientPort(port string) *RequestScopedLogger {
 	if s.client == nil {
 		s.client = &ecsClient{}
 	}
 	s.client.Port = port
+	return s
+}
+
+// NetworkForwardedIP sets an attribute for the forwarded IP address on subsequent log messages.
+func (s *RequestScopedLogger) NetworkForwardedIP(ip string) *RequestScopedLogger {
+	if s.network == nil {
+		s.network = &ecsNetwork{}
+	}
+	s.network.ForwardedIP = ip
 	return s
 }
 
