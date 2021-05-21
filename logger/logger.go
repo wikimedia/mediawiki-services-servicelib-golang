@@ -114,13 +114,25 @@ type Logger struct {
 //
 // The logLevel argument must be set to one of DEBUG, INFO, WARNING, ERROR, or FATAL.  Only
 // messages logged at this level -or higher- are formatted and output.
-func NewLogger(writer io.Writer, serviceName string, logLevel Level) (*Logger, error) {
+func NewLogger(writer io.Writer, serviceName, logLevel string) (*Logger, error) {
+	var level Level
 
-	if !validLevel(logLevel) {
-		return nil, fmt.Errorf("Unsupported log level: %d", logLevel)
+	switch strings.ToUpper(logLevel) {
+	case LevelString(DEBUG):
+		level = DEBUG
+	case LevelString(INFO):
+		level = INFO
+	case LevelString(WARNING):
+		level = WARNING
+	case LevelString(ERROR):
+		level = ERROR
+	case LevelString(FATAL):
+		level = FATAL
+	default:
+		return nil, fmt.Errorf("Unsupported log level: %s", logLevel)
 	}
 
-	return &Logger{writer: writer, serviceName: serviceName, logLevel: logLevel}, nil
+	return &Logger{writer: writer, serviceName: serviceName, logLevel: level}, nil
 }
 
 // Request creates and returns a request-scoped Logger

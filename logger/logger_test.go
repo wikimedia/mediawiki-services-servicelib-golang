@@ -47,7 +47,7 @@ func (m *mockWriter) ReadMessage() (msg *LogMessage, err error) {
 	return msg, nil
 }
 
-func setUp(level Level) (*mockWriter, *Logger) {
+func setUp(level string) (*mockWriter, *Logger) {
 	writer := &mockWriter{}
 	logger, _ := NewLogger(writer, "logtest", level)
 	return writer, logger
@@ -68,7 +68,7 @@ func TestLogger(t *testing.T) {
 		}
 		for _, tcase := range testCases {
 			t.Run(LevelString(tcase.level), func(t *testing.T) {
-				writer, logger := setUp(DEBUG)
+				writer, logger := setUp("DEBUG")
 
 				switch tcase.level {
 				case DEBUG:
@@ -99,13 +99,13 @@ func TestLogger(t *testing.T) {
 
 	// Logger is configured for INFO and above (DEBUG should be ignored)
 	t.Run("Filtered", func(t *testing.T) {
-		writer, logger := setUp(INFO)
+		writer, logger := setUp("INFO")
 		logger.Debug("Noisy log message")
 		assert.Equal(t, 0, len(writer.data), "Unexpected log output")
 	})
 
 	t.Run("Using log module", func(t *testing.T) {
-		writer, logger := setUp(INFO)
+		writer, logger := setUp("INFO")
 		log.SetFlags(0)
 		log.SetOutput(logger)
 		log.Println("Sent via log module")
@@ -121,7 +121,7 @@ func TestLogger(t *testing.T) {
 }
 
 func TestRequestScoped(t *testing.T) {
-	writer, logger := setUp(DEBUG)
+	writer, logger := setUp("DEBUG")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Request(r).Log(INFO, "In yer request, logging yer logs")
