@@ -49,7 +49,7 @@ func (m *mockWriter) ReadMessage() (msg *LogMessage, err error) {
 
 func setUp(level Level) (*mockWriter, *Logger) {
 	writer := &mockWriter{}
-	logger, _ := NewLogger(writer, "logtest", "logger", level)
+	logger, _ := NewLogger(writer, "logtest", level)
 	return writer, logger
 }
 

@@ -1,6 +1,6 @@
 # logger
 
-A very simple golang logging library.
+A very simple golang logging library for k8s deployed microservices at the Wikimedia Foundation.
 
 ## Features
 

@@ -93,7 +93,7 @@ func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) 
 			Message:   fmt.Sprintf(format, v...),
 			Client:    s.client,
 			Log:       ecsLog{Level: LevelString(level)},
-			Service:   ecsService{Name: s.logger.serviceName, Type: s.logger.serviceType},
+			Service:   ecsService{Name: s.logger.serviceName},
 			Trace:     s.trace,
 		}
 	})
@@ -103,27 +103,24 @@ func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) 
 type Logger struct {
 	writer      io.Writer
 	serviceName string
-	serviceType string
 	logLevel    Level
 }
 
-// NewLogger creates a new Logger instance using arguments for an io.Writer, service name and type, and
-// a log level.
+// NewLogger creates a new Logger instance using arguments for an io.Writer, service name,
+// and log level.
 //
-// The serviceName and serviceType arguments correspond to service.name and service.type in the ECS
-// specification (see: https://doc.wikimedia.org/ecs/#ecs-service); Broadly speaking, service type refers
-// to the software system implementing logging, and service name to the instance of that system sending
-// log data.
+// The serviceName argument corresponds to service.name in the ECS specification (see:
+// https://doc.wikimedia.org/ecs/#ecs-service).
 //
-// The logLevel argument must be set to one of DEBUG, INFO, WARNING, ERROR, or FATAL.  Only messages
-// logged at this level - or higher - are formatted and output.
-func NewLogger(writer io.Writer, serviceName, serviceType string, logLevel Level) (*Logger, error) {
+// The logLevel argument must be set to one of DEBUG, INFO, WARNING, ERROR, or FATAL.  Only
+// messages logged at this level -or higher- are formatted and output.
+func NewLogger(writer io.Writer, serviceName string, logLevel Level) (*Logger, error) {
 
 	if !validLevel(logLevel) {
 		return nil, fmt.Errorf("Unsupported log level: %d", logLevel)
 	}
 
-	return &Logger{writer, serviceName, serviceType, logLevel}, nil
+	return &Logger{writer: writer, serviceName: serviceName, logLevel: logLevel}, nil
 }
 
 // Request creates and returns a request-scoped Logger
@@ -190,7 +187,7 @@ func (l *Logger) basicLogMessage(level Level, format string, v ...interface{}) f
 		return LogMessage{
 			Message:   fmt.Sprintf(format, v...),
 			Timestamp: time.Now().Format(time.RFC3339),
-			Service:   ecsService{Name: l.serviceName, Type: l.serviceType},
+			Service:   ecsService{Name: l.serviceName},
 			Log:       ecsLog{Level: LevelString(level)},
 		}
 	}
