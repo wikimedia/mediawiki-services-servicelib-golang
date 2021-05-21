@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -97,51 +99,6 @@ func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) 
 	})
 }
 
-// ClientBytes sets a client bytes attribute on subsequent log messages
-func (s *RequestScopedLogger) ClientBytes(size int) *RequestScopedLogger {
-	if s.client == nil {
-		s.client = &ecsClient{}
-	}
-	s.client.Bytes = size
-	return s
-}
-
-// ClientIP sets a client IP attribute on subsequent log messages.
-func (s *RequestScopedLogger) ClientIP(ip string) *RequestScopedLogger {
-	if s.client == nil {
-		s.client = &ecsClient{}
-	}
-	s.client.IP = ip
-	return s
-}
-
-// ClientPort sets a client port attribute on subsequent log messages.
-func (s *RequestScopedLogger) ClientPort(port string) *RequestScopedLogger {
-	if s.client == nil {
-		s.client = &ecsClient{}
-	}
-	s.client.Port = port
-	return s
-}
-
-// NetworkForwardedIP sets an attribute for the forwarded IP address on subsequent log messages.
-func (s *RequestScopedLogger) NetworkForwardedIP(ip string) *RequestScopedLogger {
-	if s.network == nil {
-		s.network = &ecsNetwork{}
-	}
-	s.network.ForwardedIP = ip
-	return s
-}
-
-// Trace sets a trace ID attribute on subsequent log messages.
-func (s *RequestScopedLogger) Trace(id string) *RequestScopedLogger {
-	if s.trace == nil {
-		s.trace = &ecsTrace{}
-	}
-	s.trace.ID = id
-	return s
-}
-
 // Logger formats and delivers log messages (see: NewLogger()).
 type Logger struct {
 	writer      io.Writer
@@ -170,8 +127,29 @@ func NewLogger(writer io.Writer, serviceName, serviceType string, logLevel Level
 }
 
 // Request creates and returns a request-scoped Logger
-func (l *Logger) Request() *RequestScopedLogger {
-	return &RequestScopedLogger{logger: l}
+func (l *Logger) Request(r *http.Request) *RequestScopedLogger {
+	var err error
+	var forward string
+	var id string
+	var address string
+	var port string
+	var rsLog = &RequestScopedLogger{logger: l}
+
+	if id = r.Header.Get("X-Request-ID"); id != "" {
+		rsLog.trace = &ecsTrace{ID: id}
+	}
+
+	if address, port, err = net.SplitHostPort(r.RemoteAddr); err == nil {
+		rsLog.client = &ecsClient{IP: address, Port: port}
+	} else {
+		l.Error("Unable to parse %q as IP:port", r.RemoteAddr)
+	}
+
+	if forward = r.Header.Get("X-Forwarded-For"); forward != "" {
+		rsLog.network = &ecsNetwork{ForwardedIP: forward}
+	}
+
+	return rsLog
 }
 
 // Debug logs messages of severity DEBUG.

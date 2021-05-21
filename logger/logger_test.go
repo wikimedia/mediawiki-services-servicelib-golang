@@ -104,31 +104,6 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, 0, len(writer.data), "Unexpected log output")
 	})
 
-	t.Run("Request scoped", func(t *testing.T) {
-		writer, logger := setUp(INFO)
-		logger.
-			Request().
-			Trace("0000000a-000a-000a-000a-00000000000a").
-			ClientIP("127.0.0.1").
-			ClientPort("9000").
-			ClientBytes(1500).
-			Log(WARNING, "Consider yourself %s", "warned")
-
-		res, err := writer.ReadMessage()
-		if err != nil {
-			t.Fatalf("Unable to deserialize JSON log message: %s", err)
-		}
-
-		assert.Equal(t, "Consider yourself warned", res.Message, "Wrong message string attribute")
-		assert.Equal(t, LevelString(WARNING), res.Log.Level, "Wrong log level attribute")
-		assert.Equal(t, "logtest", res.Service.Name, "Wrong service.name attribute")
-		assert.Equal(t, "logger", res.Service.Type, "Incorrect service.type attribute")
-		assert.Equal(t, "0000000a-000a-000a-000a-00000000000a", res.Trace.ID, "Wrong trace.id attribute")
-		assert.Equal(t, "127.0.0.1", res.Client.IP, "Incorrect client.ip attribute")
-		assert.Equal(t, "9000", res.Client.Port, "Incorrect client.port attribute")
-		assert.Equal(t, 1500, res.Client.Bytes, "Incorrect client.bytes attribute")
-	})
-
 	t.Run("Using log module", func(t *testing.T) {
 		writer, logger := setUp(INFO)
 		log.SetFlags(0)
@@ -145,16 +120,15 @@ func TestLogger(t *testing.T) {
 	})
 }
 
-func TestHandler(t *testing.T) {
+func TestRequestScoped(t *testing.T) {
 	writer, logger := setUp(DEBUG)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log := r.Context().Value(ScopedLogger).(*RequestScopedLogger)
-		log.Log(INFO, "In yer request, logging yer logs")
+		logger.Request(r).Log(INFO, "In yer request, logging yer logs")
 		io.WriteString(w, "<html><body>Hello World!</body></html>")
 	})
 
-	ts := httptest.NewServer(LoggerInjectingMiddleware(logger)(handler))
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)

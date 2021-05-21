@@ -1,15 +1,24 @@
 # logger
 
+A very simple golang logging library.
+
+## Features
+
+- JSON-formatted messages (one per line)
+- Logs messages only in [Elasic Common Schema](https://doc.wikimedia.org/ecs/) format
+- No external dependencies
+
 ## Usage
 
 ```
 $ go get github.com/eevans/servicelib-golang/logger
 ```
 
-```
+```golang
 package main
 
 import (
+    "math/rand"
     "os"
     "time"
 
@@ -20,17 +29,19 @@ func main() {
     log, _ := logger.NewLogger(os.Stdout, "sessionstore", "kask", logger.INFO)
 
     // The basics...
-    log.Debug("Debugging yer bugs")
-    log.Info("The current time is %s", time.Now().Format(time.RFC3339))
+    log.Info("Random number %d is random", rand.Intn(100))
 
-    // Using a request-scoped logger...
-    hostname, _ := os.Hostname()
-    log.Request().
-        Trace("0a762a9c-b8d6-11eb-87bc-4f82287279b0").
-        ClientIP("127.0.0.1").
-        ClientPort(9000).
-        ClientBytes(1500).
-        Log(logger.INFO, "request received by %s", hostname)
+    // Using a request-scoped logger inside an http handler
+    handler := func(w http.ResponseWriter, r *http.Request) {
+        hostname, err := os.Hostname()
+        if err != nil {
+            log.Error("Oh no; Failed to get the hostname: %s", err)
+            return
+        }
 
+        // Inside an http handler...
+        log.Request(r).Log(logger.INFO, "request received by %s", hostname)
+        io.WriteString(w, "Hello World!")
+    }
 }
 ```
