@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-    log, _ := logger.NewLogger(os.Stdout, "sessionstore", "kask", logger.INFO)
+    log, _ := logger.NewLogger(os.Stdout, "sessionstore", logger.INFO)
 
     // The basics...
     log.Info("Random number %d is random", rand.Intn(100))
