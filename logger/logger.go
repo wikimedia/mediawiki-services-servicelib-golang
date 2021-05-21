@@ -163,27 +163,32 @@ func (l *Logger) Request(r *http.Request) *RequestScopedLogger {
 
 // Debug logs messages of severity DEBUG.
 func (l *Logger) Debug(format string, v ...interface{}) {
-	l.log(DEBUG, l.basicLogMessage(DEBUG, format, v...))
+	l.Log(DEBUG, format, v...)
 }
 
 // Info logs messages of severity INFO.
 func (l *Logger) Info(format string, v ...interface{}) {
-	l.log(INFO, l.basicLogMessage(INFO, format, v...))
+	l.Log(INFO, format, v...)
 }
 
 // Warning logs messages of severity WARNING.
 func (l *Logger) Warning(format string, v ...interface{}) {
-	l.log(WARNING, l.basicLogMessage(WARNING, format, v...))
+	l.Log(WARNING, format, v...)
 }
 
 // Error logs messages of severity ERROR.
 func (l *Logger) Error(format string, v ...interface{}) {
-	l.log(ERROR, l.basicLogMessage(ERROR, format, v...))
+	l.Log(ERROR, format, v...)
 }
 
 // Fatal logs messages of severity FATAL.
 func (l *Logger) Fatal(format string, v ...interface{}) {
-	l.log(FATAL, l.basicLogMessage(FATAL, format, v...))
+	l.Log(FATAL, format, v...)
+}
+
+// Log creates a LogMessage at the specified level.
+func (l *Logger) Log(level Level, format string, v ...interface{}) {
+	l.log(level, l.basicLogMessage(level, format, v...))
 }
 
 // Write logs messages of severity WARNING.  This method satisfies the io.Writer

@@ -1,12 +1,12 @@
 # logger
 
-A very simple golang logging library for k8s deployed microservices at the Wikimedia Foundation.
+A simple (but opinionated) golang logging library for k8s-deployed microservices at the Wikimedia Foundation.
 
 ## Features
 
-- JSON-formatted messages (one per line)
-- Logs messages only in [Elasic Common Schema](https://doc.wikimedia.org/ecs/) format
-- No external dependencies
+- Structured; JSON-formatted message objects (one per line)
+- Schema-enforced (see: [Elasic Common Schema](https://doc.wikimedia.org/ecs/))
+- Lightweight, with no external dependencies
 
 ## Usage
 
@@ -39,7 +39,7 @@ func main() {
             return
         }
 
-        // Inside an http handler...
+        // Will log request-specific details groked from the http.Request
         log.Request(r).Log(logger.INFO, "request received by %s", hostname)
         io.WriteString(w, "Hello World!")
     }
