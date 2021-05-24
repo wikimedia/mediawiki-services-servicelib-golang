@@ -1,4 +1,4 @@
-module github.com/eevans/servicelib-golang/middleware
+module github.com/eevans/servicelib-golang
 
 go 1.15
 
