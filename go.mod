@@ -1,4 +1,4 @@
-module gerrit.wikimedia.org/r/mediawiki/services/servicelib-golang/logger
+module gerrit.wikimedia.org/r/mediawiki/services/servicelib-golang
 
 go 1.15
 
