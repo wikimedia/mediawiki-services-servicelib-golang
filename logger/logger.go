@@ -129,7 +129,7 @@ func NewLogger(writer io.Writer, serviceName, logLevel string) (*Logger, error) 
 	case LevelString(FATAL):
 		level = FATAL
 	default:
-		return nil, fmt.Errorf("Unsupported log level: %s", logLevel)
+		return nil, fmt.Errorf("unsupported log level: %s", logLevel)
 	}
 
 	return &Logger{writer: writer, serviceName: serviceName, logLevel: level}, nil
@@ -194,7 +194,7 @@ func (l *Logger) Log(level Level, format string, v ...interface{}) {
 // Write logs messages of severity WARNING.  This method satisfies the io.Writer
 // interface so that Logger instances can be used as output for Golang's log module.
 func (l *Logger) Write(bytes []byte) (int, error) {
-	l.log(WARNING, l.basicLogMessage(WARNING, strings.TrimSuffix(string(bytes), "\n")))
+	l.log(WARNING, l.basicLogMessage(WARNING, "%s", strings.TrimSuffix(string(bytes), "\n")))
 	return len(bytes), nil
 }
 
