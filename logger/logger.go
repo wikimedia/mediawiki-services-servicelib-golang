@@ -36,6 +36,9 @@ const (
 	WARNING
 	ERROR
 	FATAL
+
+	// Elastic Common Schema version that log messages conform to.
+	ecsVersion = "1.11.0"
 )
 
 // LogMessage represents JSON serializable log messages.
@@ -47,6 +50,7 @@ type LogMessage struct {
 	Network   *ecsNetwork `json:"network,omitempty"`
 	Service   ecsService  `json:"service"`
 	Trace     *ecsTrace   `json:"trace,omitempty"`
+	ECS       ecsEcs      `json:"ecs"`
 }
 
 // Corresponds to https://doc.wikimedia.org/ecs/#ecs-client
@@ -77,6 +81,11 @@ type ecsTrace struct {
 	ID string `json:"id,omitempty"`
 }
 
+// Corresponds to https://doc.wikimedia.org/ecs/#ecs-ecs
+type ecsEcs struct {
+	Version string `json:"version"`
+}
+
 // RequestScopedLogger formats and delivers a Logger and optional LogMessage attributes.
 type RequestScopedLogger struct {
 	logger  *Logger
@@ -95,6 +104,7 @@ func (s *RequestScopedLogger) Log(level Level, format string, v ...interface{}) 
 			Log:       ecsLog{Level: LevelString(level)},
 			Service:   ecsService{Name: s.logger.serviceName},
 			Trace:     s.trace,
+			ECS:       ecsEcs{Version: ecsVersion},
 		}
 	})
 }
@@ -206,6 +216,7 @@ func (l *Logger) basicLogMessage(level Level, format string, v ...interface{}) f
 			Timestamp: time.Now().Format(time.RFC3339),
 			Service:   ecsService{Name: l.serviceName},
 			Log:       ecsLog{Level: LevelString(level)},
+			ECS:       ecsEcs{Version: ecsVersion},
 		}
 	}
 }

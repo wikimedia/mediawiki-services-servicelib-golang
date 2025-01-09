@@ -93,6 +93,7 @@ func TestLogger(t *testing.T) {
 				assert.Equal(t, fmt.Sprintf(tcase.format, tcase.arg), r.Message, "Wrong message string attribute")
 				assert.Equal(t, LevelString(tcase.level), r.Log.Level, "Wrong log level attribute")
 				assert.Equal(t, "logtest", r.Service.Name, "Wrong appname attribute")
+				assert.Equal(t, ecsVersion, r.ECS.Version)
 			})
 		}
 	})
@@ -145,5 +146,6 @@ func TestRequestScoped(t *testing.T) {
 	assert.NotNil(t, msg.Client)
 	assert.NotEmpty(t, msg.Client.IP)
 	assert.NotEmpty(t, msg.Client.Port)
+	assert.Equal(t, ecsVersion, msg.ECS.Version)
 
 }
